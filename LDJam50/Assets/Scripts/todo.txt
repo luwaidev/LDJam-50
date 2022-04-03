@@ -1,0 +1,3 @@
+Set up animator for gamemanager
+set up main menu sequence
+dialogue manager
