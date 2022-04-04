@@ -19,5 +19,11 @@ public class BossBody : MonoBehaviour
                                 Mathf.Lerp(transform.position.x, parent.transform.position.x + BossController.bodyOffset.x, BossController.bodySpeed.x),
                                 Mathf.Lerp(transform.position.y, parent.transform.position.y + BossController.bodyOffset.y, BossController.bodySpeed.y));
 
+        // Rotate towards direction 
+        transform.eulerAngles = new Vector3(0, 0,
+                    Mathf.LerpAngle(transform.eulerAngles.z,
+                                    parent.eulerAngles.z,
+                                    BossController.bodyAngleSpeed));
+
     }
 }

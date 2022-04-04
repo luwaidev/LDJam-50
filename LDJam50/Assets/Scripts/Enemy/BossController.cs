@@ -23,12 +23,16 @@ public class BossController : MonoBehaviour
     [Header("General")]
     public State state;
     public Vector2 target;
+    public float angleMagnitude;
+    public float angleSpeed;
+    public static float bodyAngleSpeed;
 
     ////////// Functions //////////
     private void Awake()
     {
         bodyOffset = offset;
         bodySpeed = bspeed;
+        bodyAngleSpeed = angleSpeed;
     }
 
     // Start is called before the first frame update
@@ -41,6 +45,8 @@ public class BossController : MonoBehaviour
     void Update()
     {
 
+        // Rotate towards direction 
+        transform.eulerAngles = new Vector3(0, 0, Mathf.LerpAngle(transform.eulerAngles.z, (target.x - transform.position.x) * angleMagnitude, angleSpeed));
     }
 
     ////////// State //////////
@@ -70,15 +76,16 @@ public class BossController : MonoBehaviour
     {
         while (state == State.Idle)
         {
-            if (Vector2.Distance(transform.position, target) < 0.5f)
+            if (Vector2.Distance(transform.position, target) < 0.1f)
             {
+                target = transform.position;
+                yield return new WaitForSeconds(Random.Range(delayTime.x, delayTime.y));
                 // Set new x offset
                 target.x = Random.Range(xOffset.x, xOffset.y) * -Mathf.Sign(target.x);
 
                 // Set new y offset
                 target.y = Random.Range(yOffset.x, yOffset.y);
 
-                yield return new WaitForSeconds(Random.Range(delayTime.x, delayTime.y));
             }
 
             // Move to position 

@@ -16,6 +16,6 @@ public class BulletController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-
+        if (Vector2.Distance(transform.position, Vector2.zero) > 10) Destroy(gameObject);
     }
 }

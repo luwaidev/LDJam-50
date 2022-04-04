@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using MoreMountains.Feedbacks;
 
 public class PlayerController : MonoBehaviour
 {
@@ -9,6 +10,13 @@ public class PlayerController : MonoBehaviour
     public Rigidbody2D rb;
     public Transform shootPosition;
     public GameObject bullet;
+
+    [Header("Effects")]
+    public MMFeedbacks shootEffect;
+    public MMFeedbacks dashEffect;
+    public MMFeedbacks hitEffect;
+    public GameObject hitParticle;
+
     [Header("Afterimage")]
     public Transform afterImage;
     public Vector2 afterImagePosition;
@@ -44,7 +52,11 @@ public class PlayerController : MonoBehaviour
     public void OnMove(InputValue value)
     {
         input = value.Get<Vector2>(); // Get Vector2 input
-        // direction = (Mathf.Abs(input.x) >= Mathf.Abs(input.y) ? "Side" : (input.y > 0 ? "Up" : "Down"));
+
+        var mouse = Mouse.current; // Get mouse
+        Vector2 mousePositionToPlayer = ((Vector2)Camera.main.ScreenToWorldPoint(mouse.position.ReadValue()) - (Vector2)transform.position); // Get mouse positions
+
+        mouseDirection = mousePositionToPlayer.normalized;
     }
 
     // Called when fire button is pressed
@@ -58,10 +70,6 @@ public class PlayerController : MonoBehaviour
     {
         var mouse = Mouse.current; // Get mouse
         Vector2 mousePositionToPlayer = ((Vector2)Camera.main.ScreenToWorldPoint(mouse.position.ReadValue()) - (Vector2)transform.position); // Get mouse positions
-
-        angle = Mathf.LerpAngle(angle,
-            Mathf.Atan2(mousePositionToPlayer.y, mousePositionToPlayer.x) * Mathf.Rad2Deg, turnSpeed);
-        transform.eulerAngles = new Vector3(0, 0, angle);
 
         mouseDirection = mousePositionToPlayer.normalized;
 
@@ -93,15 +101,29 @@ public class PlayerController : MonoBehaviour
             // Setting movement velocity
             Vector2 directionBonus = input == Vector2.zero ? Vector2.zero : mouseDirection * mouseSpeed;
             rb.velocity = input * speed + directionBonus;
+
+            angle = Mathf.LerpAngle(angle,
+            Mathf.Atan2(mouseDirection.y, mouseDirection.x) * Mathf.Rad2Deg, turnSpeed);
+            transform.eulerAngles = new Vector3(0, 0, angle);
         }
 
         AfterImage();
+    }
+
+    private void OnTriggerEnter2D(Collider2D other)
+    {
+        if (other.tag == "Enemy" && !movementLocked)
+        {
+            OnHit(other.transform.position);
+        }
     }
 
     //////////////// Coroutines ///////////////
     public IEnumerator Shoot()
     {
         if (firing) yield break;
+
+        shootEffect.PlayFeedbacks();
         firing = true;
         Instantiate(bullet, shootPosition.transform.position, shootPosition.rotation);
         yield return new WaitForSeconds(fireSpeed);
@@ -111,13 +133,14 @@ public class PlayerController : MonoBehaviour
     public IEnumerator Hit()
     {
         movementLocked = true;
+        hitEffect.PlayFeedbacks();
         yield return new WaitForSeconds(knockbackTime);
         movementLocked = false;
     }
 
     public IEnumerator Dash()
     {
-        rb.velocity = dashSpeed * mouseDirection;
+        rb.velocity = dashSpeed * input;
         movementLocked = true;
         yield return new WaitForSeconds(dashTime);
         movementLocked = false;
@@ -131,6 +154,8 @@ public class PlayerController : MonoBehaviour
     public void OnHit(Vector2 position)
     {
         rb.velocity = -(position - (Vector2)transform.position).normalized * knockbackSpeed;
+        Instantiate(hitParticle, position, Quaternion.identity);
+        StartCoroutine(Hit());
     }
 
     private void AfterImage()
@@ -138,4 +163,6 @@ public class PlayerController : MonoBehaviour
         afterImage.position = Vector2.Lerp(afterImage.position, (Vector2)transform.position + afterImagePosition, afterImageSpeed);
         afterImage.rotation = Quaternion.Lerp(afterImage.rotation, transform.rotation, afterImageSpeed);
     }
+
+
 }
