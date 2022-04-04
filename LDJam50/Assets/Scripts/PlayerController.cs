@@ -9,12 +9,31 @@ public class PlayerController : MonoBehaviour
     public Rigidbody2D rb;
     public Transform shootPosition;
     public GameObject bullet;
+    [Header("Afterimage")]
+    public Transform afterImage;
+    public Vector2 afterImagePosition;
+    public float afterImageSpeed;
 
-    public Vector2 maxPosition;
+    [Header("State")]
+    public bool movementLocked;
+    public bool invincible;
+
+    [Header("Movement Settings")]
     // Movement Settings
+    private float angle;
+    public float turnSpeed;
     [SerializeField] private float speed;
     private Vector2 input;
-    public Vector2 mouseDirection;
+    private Vector2 mouseDirection;
+    public float mouseSpeed;
+
+    [Header("Dash Settings")]
+    public float dashSpeed;
+    public float dashTime;
+
+    [Header("Hit Settings")]
+    public float knockbackSpeed;
+    public float knockbackTime;
 
     // Combat settings
     public bool firing;
@@ -31,7 +50,7 @@ public class PlayerController : MonoBehaviour
     // Called when fire button is pressed
     public void OnFire(InputValue value)
     {
-        StartCoroutine(Shoot());
+        if (!movementLocked) StartCoroutine(Shoot());
     }
 
 
@@ -40,17 +59,17 @@ public class PlayerController : MonoBehaviour
         var mouse = Mouse.current; // Get mouse
         Vector2 mousePositionToPlayer = ((Vector2)Camera.main.ScreenToWorldPoint(mouse.position.ReadValue()) - (Vector2)transform.position); // Get mouse positions
 
-        // mouseAngle = Mathf.Atan2(mousePositionToPlayer.x, mousePositionToPlayer.y);
+        angle = Mathf.LerpAngle(angle,
+            Mathf.Atan2(mousePositionToPlayer.y, mousePositionToPlayer.x) * Mathf.Rad2Deg, turnSpeed);
+        transform.eulerAngles = new Vector3(0, 0, angle);
+
         mouseDirection = mousePositionToPlayer.normalized;
 
-        // Set position
-        shootPosition.localPosition = mouseDirection;
-        shootPosition.eulerAngles = new Vector3(0, 0, Mathf.Atan2(mouseDirection.y, mouseDirection.x) * Mathf.Rad2Deg);
     }
 
     public void OnDash()
     {
-
+        if (!movementLocked) StartCoroutine(Dash());
     }
 
     //////////////// Unity Functions ///////////////
@@ -59,6 +78,7 @@ public class PlayerController : MonoBehaviour
     {
         player = this;
     }
+
     // Start is called before the first frame update
     void Start()
     {
@@ -68,7 +88,14 @@ public class PlayerController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        rb.velocity = input * speed;
+        if (!movementLocked)
+        {
+            // Setting movement velocity
+            Vector2 directionBonus = input == Vector2.zero ? Vector2.zero : mouseDirection * mouseSpeed;
+            rb.velocity = input * speed + directionBonus;
+        }
+
+        AfterImage();
     }
 
     //////////////// Coroutines ///////////////
@@ -81,5 +108,34 @@ public class PlayerController : MonoBehaviour
         firing = false;
     }
 
+    public IEnumerator Hit()
+    {
+        movementLocked = true;
+        yield return new WaitForSeconds(knockbackTime);
+        movementLocked = false;
+    }
+
+    public IEnumerator Dash()
+    {
+        rb.velocity = dashSpeed * mouseDirection;
+        movementLocked = true;
+        yield return new WaitForSeconds(dashTime);
+        movementLocked = false;
+        // Setting movement velocity
+        Vector2 directionBonus = input == Vector2.zero ? Vector2.zero : mouseDirection * mouseSpeed;
+        rb.velocity = input * speed + directionBonus;
+    }
+
     //////////////// Functions ///////////////
+
+    public void OnHit(Vector2 position)
+    {
+        rb.velocity = -(position - (Vector2)transform.position).normalized * knockbackSpeed;
+    }
+
+    private void AfterImage()
+    {
+        afterImage.position = Vector2.Lerp(afterImage.position, (Vector2)transform.position + afterImagePosition, afterImageSpeed);
+        afterImage.rotation = Quaternion.Lerp(afterImage.rotation, transform.rotation, afterImageSpeed);
+    }
 }
