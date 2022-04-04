@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using MoreMountains.Feedbacks;
 
 public class BossController : MonoBehaviour
 {
@@ -9,6 +10,10 @@ public class BossController : MonoBehaviour
     public Vector2 bspeed;
     public static Vector2 bodyOffset;
     public static Vector2 bodySpeed;
+
+    [Header("Effects")]
+    public GameObject hitParticle;
+    public MMFeedbacks hitFeedback;
 
     [Header("Health")]
     public int maxHealth;
@@ -47,6 +52,17 @@ public class BossController : MonoBehaviour
 
         // Rotate towards direction 
         transform.eulerAngles = new Vector3(0, 0, Mathf.LerpAngle(transform.eulerAngles.z, (target.x - transform.position.x) * angleMagnitude, angleSpeed));
+    }
+
+    private void OnTriggerEnter2D(Collider2D other)
+    {
+        if (other.tag == "Bullet")
+        {
+            health--;
+            hitFeedback.PlayFeedbacks();
+            Instantiate(hitParticle, other.transform.position, other.transform.rotation);
+            Destroy(other);
+        }
     }
 
     ////////// State //////////

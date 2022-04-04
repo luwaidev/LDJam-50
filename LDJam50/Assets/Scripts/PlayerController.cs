@@ -25,6 +25,8 @@ public class PlayerController : MonoBehaviour
     [Header("State")]
     public bool movementLocked;
     public bool invincible;
+    public bool firingInput;
+    public int health;
 
     [Header("Movement Settings")]
     // Movement Settings
@@ -62,7 +64,7 @@ public class PlayerController : MonoBehaviour
     // Called when fire button is pressed
     public void OnFire(InputValue value)
     {
-        if (!movementLocked) StartCoroutine(Shoot());
+        firingInput = !firingInput;
     }
 
 
@@ -100,17 +102,19 @@ public class PlayerController : MonoBehaviour
         {
             // Setting movement velocity
             Vector2 directionBonus = input == Vector2.zero ? Vector2.zero : mouseDirection * mouseSpeed;
-            rb.velocity = input * speed + directionBonus;
+            if (input != Vector2.zero) rb.velocity = input * speed + directionBonus;
 
             angle = Mathf.LerpAngle(angle,
             Mathf.Atan2(mouseDirection.y, mouseDirection.x) * Mathf.Rad2Deg, turnSpeed);
             transform.eulerAngles = new Vector3(0, 0, angle);
+
+            if (firingInput) StartCoroutine(Shoot());
         }
 
         AfterImage();
     }
 
-    private void OnTriggerEnter2D(Collider2D other)
+    private void OnTriggerStay2D(Collider2D other)
     {
         if (other.tag == "Enemy" && !movementLocked)
         {
@@ -136,15 +140,19 @@ public class PlayerController : MonoBehaviour
         hitEffect.PlayFeedbacks();
         yield return new WaitForSeconds(knockbackTime);
         movementLocked = false;
+        health--;
     }
 
     public IEnumerator Dash()
     {
-        rb.velocity = dashSpeed * input;
+        rb.velocity = mouseDirection * dashSpeed;
+        dashEffect.PlayFeedbacks();
         movementLocked = true;
+
         yield return new WaitForSeconds(dashTime);
         movementLocked = false;
         // Setting movement velocity
+
         Vector2 directionBonus = input == Vector2.zero ? Vector2.zero : mouseDirection * mouseSpeed;
         rb.velocity = input * speed + directionBonus;
     }
@@ -153,8 +161,9 @@ public class PlayerController : MonoBehaviour
 
     public void OnHit(Vector2 position)
     {
+        if (movementLocked) return;
         rb.velocity = -(position - (Vector2)transform.position).normalized * knockbackSpeed;
-        Instantiate(hitParticle, position, Quaternion.identity);
+        Instantiate(hitParticle, transform.position + ((Vector3)position - transform.position).normalized, Quaternion.identity);
         StartCoroutine(Hit());
     }
 
