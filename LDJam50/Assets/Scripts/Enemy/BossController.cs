@@ -11,6 +11,8 @@ public class BossController : MonoBehaviour
     public static Vector2 bodyOffset;
     public static Vector2 bodySpeed;
 
+    public static BossController instance;
+
     [Header("Effects")]
     public GameObject hitParticle;
     public MMFeedbacks hitFeedback;
@@ -31,6 +33,19 @@ public class BossController : MonoBehaviour
     public float angleMagnitude;
     public float angleSpeed;
     public static float bodyAngleSpeed;
+    public int damage;
+
+    [Header("Time Settings")]
+    private float maxTime;
+    public float time;
+    public float actualTime;
+    public float damageMultiplier;
+
+    public float attackMultiplier;
+    public bool hit;
+
+    [Header("Evacuation Stats")]
+    public float baseEvacuations;
 
     ////////// Functions //////////
     private void Awake()
@@ -38,12 +53,34 @@ public class BossController : MonoBehaviour
         bodyOffset = offset;
         bodySpeed = bspeed;
         bodyAngleSpeed = angleSpeed;
+        instance = this;
     }
 
     // Start is called before the first frame update
     void Start()
     {
         NextState();
+        maxTime = time;
+    }
+
+    IEnumerator Timer()
+    {
+        if (!hit)
+        {
+            time--;
+        }
+        else if (state == State.Charge)
+        {
+            time -= attackMultiplier;
+        }
+        else
+        {
+            time -= damageMultiplier;
+        }
+        actualTime++;
+        yield return new WaitForSeconds(1);
+        hit = false;
+        StartCoroutine(Timer());
     }
 
     // Update is called once per frame
@@ -52,19 +89,36 @@ public class BossController : MonoBehaviour
 
         // Rotate towards direction 
         transform.eulerAngles = new Vector3(0, 0, Mathf.LerpAngle(transform.eulerAngles.z, (target.x - transform.position.x) * angleMagnitude, angleSpeed));
+
+        if (!hit)
+        {
+            time -= Time.deltaTime;
+        }
+        else
+        {
+            time -= Time.deltaTime * damageMultiplier;
+        }
+
+
     }
 
-    private void OnTriggerEnter2D(Collider2D other)
+    public void OnTriggerEnter2D(Collider2D other)
     {
         if (other.tag == "Bullet")
         {
-            health--;
+            damage++;
+            hit = true;
             hitFeedback.PlayFeedbacks();
             Instantiate(hitParticle, other.transform.position, other.transform.rotation);
-            Destroy(other);
+            Destroy(other.gameObject);
         }
+
     }
 
+    public void ProgressBar()
+    {
+
+    }
     ////////// State //////////
     void NextState()
     {
@@ -76,9 +130,6 @@ public class BossController : MonoBehaviour
                                 System.Reflection.BindingFlags.NonPublic |
                                 System.Reflection.BindingFlags.Instance);
 
-        print(info);
-        print(methodName);
-        print(this);
         StartCoroutine((IEnumerator)info.Invoke(this, null)); // Call the next state
     }
 
@@ -107,7 +158,14 @@ public class BossController : MonoBehaviour
             // Move to position 
             transform.position = Vector2.MoveTowards(transform.position, target, idleSpeed);
             yield return null;
+
+            // check if should attack
+            if (damage >= 35)
+            {
+                state = State.Charge;
+            }
         }
+
 
         NextState();
     }
@@ -159,7 +217,7 @@ public class BossController : MonoBehaviour
             // Move to position 
             transform.position = Vector2.Lerp(transform.position, target, chargeReturnSpeed);
         }
-
+        damage = 0;
         state = State.Idle;
         NextState();
     }

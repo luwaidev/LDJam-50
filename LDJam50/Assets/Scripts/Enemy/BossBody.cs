@@ -26,4 +26,9 @@ public class BossBody : MonoBehaviour
                                     BossController.bodyAngleSpeed));
 
     }
+    private void OnTriggerEnter2D(Collider2D other)
+    {
+        BossController.instance.OnTriggerEnter2D(other);
+
+    }
 }

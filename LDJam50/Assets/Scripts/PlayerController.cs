@@ -141,6 +141,11 @@ public class PlayerController : MonoBehaviour
         yield return new WaitForSeconds(knockbackTime);
         movementLocked = false;
         health--;
+
+        if (health <= 0)
+        {
+            GameManager.instance.LoadWithDelay("End", 1);
+        }
     }
 
     public IEnumerator Dash()

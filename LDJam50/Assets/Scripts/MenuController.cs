@@ -18,8 +18,13 @@ public class MenuController : MonoBehaviour
 
     public void OnPlay()
     {
-        Debug.Log("Loading Scene");
-        GameManager.instance.StartCoroutine(GameManager.instance.LoadScene("Game"));
+        // Debug.Log("Loading Scene");
+        GameManager.instance.LoadWithDelay("Game", 1);
 
+    }
+
+    public void ReturnToMainMenu()
+    {
+        GameManager.instance.Load("Main Menu");
     }
 }

@@ -4,15 +4,21 @@ using UnityEngine;
 
 public class BackgroundController : MonoBehaviour
 {
+    public BossController bc;
     public float speed;
     public Transform[] background;
 
+    private void Start()
+    {
+        bc = BossController.instance;
+    }
     // Update is called once per frame
     void Update()
     {
         for (int i = 0; i < background.Length; i++)
         {
-            background[i].position = new Vector2(0, background[i].position.y + speed);
+            if (bc.hit) background[i].position = new Vector2(0, background[i].position.y + speed * bc.damageMultiplier * Time.deltaTime);
+            else background[i].position = new Vector2(0, background[i].position.y + speed);
 
             if (background[i].position.y >= 12)
             {
