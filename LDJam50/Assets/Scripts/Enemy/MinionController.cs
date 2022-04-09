@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using MoreMountains.Feedbacks;
 
 public class MinionController : MonoBehaviour
 {
@@ -12,11 +13,17 @@ public class MinionController : MonoBehaviour
     }
     public State state;
     public Vector2 target;
+    public Rigidbody2D rb;
 
     [Header("Movement Settings")]
     public float speed;
     public float turnSpeed;
     public float angle;
+
+
+    [Header("Effects")]
+    public GameObject hitParticle;
+    public MMFeedbacks hitFeedback;
 
     [Header("Following")]
     public Transform minionAhead;
@@ -37,7 +44,12 @@ public class MinionController : MonoBehaviour
         angle = Mathf.LerpAngle(angle, Mathf.Atan2(playerDirection.y, playerDirection.x) * Mathf.Rad2Deg, turnSpeed);
         transform.eulerAngles = new Vector3(0, 0, angle);
 
-        transform.position = Vector2.MoveTowards(transform.position, playerPosition - Vector2.down * 10, speed);
+        rb.velocity = ((playerPosition + Vector2.down * 5) - (Vector2)transform.position).normalized * speed;
+
+        if (transform.position.y < -5.7f)
+        {
+            Destroy(gameObject);
+        }
     }
 
     ////////// State //////////
@@ -86,4 +98,18 @@ public class MinionController : MonoBehaviour
 
     //     NextState();
     // }
+
+    public void OnTriggerEnter2D(Collider2D other)
+    {
+        if (other.tag == "Bullet")
+        {
+            if (hitFeedback == null) hitFeedback = GameObject.Find("Boss Hit").GetComponent<MMFeedbacks>();
+            hitFeedback.PlayFeedbacks();
+            Instantiate(hitParticle, other.transform.position, other.transform.rotation);
+            Destroy(other.gameObject);
+            Destroy(gameObject);
+
+        }
+
+    }
 }

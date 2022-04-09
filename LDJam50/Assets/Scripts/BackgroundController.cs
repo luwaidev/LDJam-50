@@ -10,20 +10,34 @@ public class BackgroundController : MonoBehaviour
 
     private void Start()
     {
-        bc = BossController.instance;
+        if (BossController.instance != null) bc = BossController.instance;
     }
     // Update is called once per frame
     void Update()
     {
         for (int i = 0; i < background.Length; i++)
         {
-            if (bc.hit) background[i].position = new Vector2(0, background[i].position.y + speed * bc.damageMultiplier * Time.deltaTime);
-            else background[i].position = new Vector2(0, background[i].position.y + speed);
-
-            if (background[i].position.y >= 12)
+            if (bc != null)
             {
-                background[i].position = new Vector2(0, -12);
+                if (bc.hit) background[i].position = new Vector2(0, background[i].position.y + speed * bc.damageMultiplier * Time.deltaTime);
+                else background[i].position = new Vector2(0, background[i].position.y + speed * Time.deltaTime);
+
+                if (background[i].position.y >= 12)
+                {
+                    background[i].position = new Vector2(0, -12);
+                }
             }
+
+            else
+            {
+                background[i].position = new Vector2(0, background[i].position.y + speed * Time.deltaTime);
+
+                if (background[i].position.y >= 12)
+                {
+                    background[i].position = new Vector2(0, -12);
+                }
+            }
+
         }
     }
 }

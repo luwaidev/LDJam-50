@@ -16,6 +16,8 @@ public class BossController : MonoBehaviour
     [Header("Effects")]
     public GameObject hitParticle;
     public MMFeedbacks hitFeedback;
+    public AudioSource growl;
+    public AudioSource attack;
 
     [Header("Health")]
     public int maxHealth;
@@ -35,6 +37,11 @@ public class BossController : MonoBehaviour
     public static float bodyAngleSpeed;
     public int damage;
 
+    [Header("Enemies")]
+    public Transform[] spawnPositions;
+    public GameObject minion;
+    public GameObject chargeEnemy;
+
     [Header("Time Settings")]
     private float maxTime;
     public float time;
@@ -43,6 +50,8 @@ public class BossController : MonoBehaviour
 
     public float attackMultiplier;
     public bool hit;
+    public Transform timeIndicator;
+    public Transform timeBar;
 
     [Header("Evacuation Stats")]
     public float baseEvacuations;
@@ -61,21 +70,23 @@ public class BossController : MonoBehaviour
     {
         NextState();
         maxTime = time;
+        time = 0;
+        StartCoroutine(Timer());
     }
 
     IEnumerator Timer()
     {
         if (!hit)
         {
-            time--;
+            time++;
         }
         else if (state == State.Charge)
         {
-            time -= attackMultiplier;
+            time += attackMultiplier;
         }
         else
         {
-            time -= damageMultiplier;
+            time += damageMultiplier;
         }
         actualTime++;
         yield return new WaitForSeconds(1);
@@ -90,15 +101,13 @@ public class BossController : MonoBehaviour
         // Rotate towards direction 
         transform.eulerAngles = new Vector3(0, 0, Mathf.LerpAngle(transform.eulerAngles.z, (target.x - transform.position.x) * angleMagnitude, angleSpeed));
 
-        if (!hit)
-        {
-            time -= Time.deltaTime;
-        }
-        else
-        {
-            time -= Time.deltaTime * damageMultiplier;
-        }
 
+        ProgressBar();
+
+        if (time > maxTime)
+        {
+            GameManager.instance.Load("Main Menu");
+        }
 
     }
 
@@ -111,13 +120,25 @@ public class BossController : MonoBehaviour
             hitFeedback.PlayFeedbacks();
             Instantiate(hitParticle, other.transform.position, other.transform.rotation);
             Destroy(other.gameObject);
+            if (damage % 5 == 0)
+            {
+                int spawnPoint = Random.Range(0, 1);
+                Instantiate(chargeEnemy, spawnPositions[spawnPoint].position, Quaternion.identity);
+            }
+            else if (damage % 4 == 0)
+            {
+                int spawnPoint = Random.Range(0, 1);
+                Instantiate(minion, spawnPositions[spawnPoint].position, Quaternion.identity);
+            }
+
         }
 
     }
 
     public void ProgressBar()
     {
-
+        timeIndicator.position = new Vector2(time / maxTime * 11 - 5.5f, 4.6f);
+        timeBar.localScale = new Vector2(time / maxTime, 0.1f);
     }
     ////////// State //////////
     void NextState()
@@ -160,10 +181,11 @@ public class BossController : MonoBehaviour
             yield return null;
 
             // check if should attack
-            if (damage >= 35)
+            if (damage >= 40)
             {
                 state = State.Charge;
             }
+
         }
 
 
@@ -180,6 +202,7 @@ public class BossController : MonoBehaviour
     public float rechargeSpeed;
     IEnumerator ChargeState()
     {
+        growl.Play();
         float time = 0;
         while (time < chargeWaitTime)
         {
@@ -188,7 +211,7 @@ public class BossController : MonoBehaviour
             target.x = PlayerController.player.transform.position.x;
 
             // Set y offset
-            target.y = Random.Range(yOffset.x, yOffset.y);
+            target.y = 5f;
 
             // Move to position 
             transform.position = Vector2.MoveTowards(transform.position, target, chargeWaitSpeed);
@@ -196,12 +219,14 @@ public class BossController : MonoBehaviour
             time += Time.deltaTime;
         }
 
+        attack.Play();
         // Set y position
         target.y = chargeYLimit - 1;
         while (transform.position.y > chargeYLimit)
         {
             // Move to position 
             transform.position = Vector2.Lerp(transform.position, target, chargeSpeed);
+            yield return null;
         }
 
         yield return new WaitForSeconds(rechargeSpeed);
@@ -212,10 +237,11 @@ public class BossController : MonoBehaviour
         // Set new y offset
         target.y = Random.Range(yOffset.x, yOffset.y);
 
-        while (transform.position.y < target.y)
+        while (transform.position.y < target.y - 1.5f)
         {
             // Move to position 
             transform.position = Vector2.Lerp(transform.position, target, chargeReturnSpeed);
+            yield return null;
         }
         damage = 0;
         state = State.Idle;

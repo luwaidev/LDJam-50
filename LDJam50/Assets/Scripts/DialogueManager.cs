@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 // Dialogue system using 
 public class DialogueManager : MonoBehaviour
@@ -10,7 +11,12 @@ public class DialogueManager : MonoBehaviour
     public Transform[] textObjects;
     public int currentText;
     public int currentSubText;
+    public bool dialogue;
 
+    private void Awake()
+    {
+        i = this;
+    }
     // Start is called before the first frame update
     void Start()
     {
@@ -20,12 +26,24 @@ public class DialogueManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-
+        if (dialogue && Keyboard.current.anyKey.wasPressedThisFrame)
+        {
+            OnTextEnd();
+        }
     }
 
     public void StartText(Transform[] text)
     {
         textObjects = text;
+        textObjects[0].GetChild(0).gameObject.SetActive(true);
+
+        GetComponent<Animator>().SetTrigger("In");
+
+        dialogue = true;
+    }
+    public void NextText()
+    {
+
     }
 
     public void OnTextEnd()
@@ -37,7 +55,7 @@ public class DialogueManager : MonoBehaviour
         if (currentSubText >= textObjects[currentText].childCount)
         {
             // Hide old text
-            textObjects[currentText].GetChild(currentSubText).gameObject.SetActive(false);
+            textObjects[currentText].GetChild(currentSubText - 1).gameObject.SetActive(false);
 
             // Update new position
             currentSubText = 0;
@@ -57,8 +75,11 @@ public class DialogueManager : MonoBehaviour
 
     private void EndDialogue()
     {
-        textBox.SetActive(false);
+        // textBox.SetActive(false);
         currentText = 0;
         currentSubText = 0;
+
+
+        GameManager.instance.LoadWithDelay("Game", 1);
     }
 }

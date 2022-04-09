@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using MoreMountains.Feedbacks;
 
 public class ChargeEnemy : MonoBehaviour
 {
@@ -12,6 +13,8 @@ public class ChargeEnemy : MonoBehaviour
     }
     public State state;
     public Vector2 target;
+    public Rigidbody2D rb;
+    public int health;
 
     [Header("Movement Settings")]
     public float speed;
@@ -20,6 +23,11 @@ public class ChargeEnemy : MonoBehaviour
 
     [Header("Following")]
     public Transform minionAhead;
+
+
+    [Header("Effects")]
+    public GameObject hitParticle;
+    public MMFeedbacks hitFeedback;
 
     ///////// Unity Functions //////////
     // Start is called before the first frame update
@@ -48,38 +56,58 @@ public class ChargeEnemy : MonoBehaviour
                                 System.Reflection.BindingFlags.NonPublic |
                                 System.Reflection.BindingFlags.Instance);
 
-        print(info);
-        print(methodName);
-        print(this);
         StartCoroutine((IEnumerator)info.Invoke(this, null)); // Call the next state
     }
 
 
-    [Header("Idle State")]
-    public Vector2 yOffset;
-    public Vector2 xOffset;
-    public float idleSpeed;
-    public Vector2 delayTime;
-    IEnumerator IdleState()
+    IEnumerator FollowState()
     {
         while (state == State.Follow)
         {
-            if (Vector2.Distance(transform.position, target) < 0.5f)
-            {
-                // Set new x offset
-                target.x = Random.Range(xOffset.x, xOffset.y) * -Mathf.Sign(target.x);
-
-                // Set new y offset
-                target.y = Random.Range(yOffset.x, yOffset.y);
-
-                yield return new WaitForSeconds(Random.Range(delayTime.x, delayTime.y));
-            }
 
             // Move to position 
-            transform.position = Vector2.MoveTowards(transform.position, target, idleSpeed);
+            Vector2 direction = PlayerController.player.transform.position - transform.position;
+            rb.velocity = direction.normalized * chargeSpeed;
+
+            Vector2 pp = PlayerController.player.transform.position;
+            if (pp.y < transform.position.y && Vector2.Distance(pp, transform.position) < 1f)
+            {
+                state = State.Charge;
+            }
             yield return null;
         }
 
         NextState();
+    }
+
+    public float chargeSpeed;
+    IEnumerator ChargeState()
+
+    {
+        Vector2 direction = PlayerController.player.transform.position - transform.position;
+        rb.velocity = direction.normalized * chargeSpeed;
+        while (transform.position.y > -5.5)
+        {
+            yield return null;
+        }
+        Destroy(gameObject);
+    }
+
+    public void OnTriggerEnter2D(Collider2D other)
+    {
+        if (other.tag == "Bullet")
+        {
+            if (hitFeedback == null) hitFeedback = GameObject.Find("Boss Hit").GetComponent<MMFeedbacks>();
+            hitFeedback.PlayFeedbacks();
+            Instantiate(hitParticle, other.transform.position, other.transform.rotation);
+            Destroy(other.gameObject);
+            health--;
+            if (health <= 0)
+            {
+                Destroy(gameObject);
+            }
+
+        }
+
     }
 }

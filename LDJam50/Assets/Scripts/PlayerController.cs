@@ -15,6 +15,7 @@ public class PlayerController : MonoBehaviour
     public MMFeedbacks shootEffect;
     public MMFeedbacks dashEffect;
     public MMFeedbacks hitEffect;
+    public MMFeedbacks deadEffect;
     public GameObject hitParticle;
 
     [Header("Afterimage")]
@@ -33,7 +34,7 @@ public class PlayerController : MonoBehaviour
     private float angle;
     public float turnSpeed;
     [SerializeField] private float speed;
-    private Vector2 input;
+    public Vector2 input;
     private Vector2 mouseDirection;
     public float mouseSpeed;
 
@@ -136,6 +137,7 @@ public class PlayerController : MonoBehaviour
 
     public IEnumerator Hit()
     {
+        GameObject.FindGameObjectWithTag("Health").GetComponent<HealthPointController>().OnHealthChange();
         movementLocked = true;
         hitEffect.PlayFeedbacks();
         yield return new WaitForSeconds(knockbackTime);
@@ -144,7 +146,9 @@ public class PlayerController : MonoBehaviour
 
         if (health <= 0)
         {
-            GameManager.instance.LoadWithDelay("End", 1);
+            deadEffect.PlayFeedbacks();
+            GameManager.instance.LoadWithDelay("Main Menu", 1);
+            speed = 0;
         }
     }
 

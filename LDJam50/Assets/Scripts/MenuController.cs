@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class MenuController : MonoBehaviour
 {
+    public Transform[] dialogue;
     // Start is called before the first frame update
     void Start()
     {
@@ -19,7 +20,8 @@ public class MenuController : MonoBehaviour
     public void OnPlay()
     {
         // Debug.Log("Loading Scene");
-        GameManager.instance.LoadWithDelay("Game", 1);
+        DialogueManager.i.StartText(dialogue);
+        GetComponent<Animator>().SetTrigger("Out");
 
     }
 

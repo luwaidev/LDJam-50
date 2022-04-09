@@ -6,6 +6,7 @@ TagManager:
   tags:
   - Enemy
   - Bullet
+  - Health
   layers:
   - Default
   - TransparentFX
@@ -16,7 +17,7 @@ TagManager:
   - Player
   - Enemy
   - Enemy Collision
-  - 
+  - Bullets
   - 
   - 
   - 
@@ -49,12 +50,15 @@ TagManager:
   - name: Player
     uniqueID: 2155052815
     locked: 0
-  - name: Enemies
-    uniqueID: 1449363757
-    locked: 0
   - name: Boss
     uniqueID: 3238079151
     locked: 0
+  - name: Enemies
+    uniqueID: 1449363757
+    locked: 0
   - name: Effect
     uniqueID: 2472754647
+    locked: 0
+  - name: UI
+    uniqueID: 446772123
     locked: 0
