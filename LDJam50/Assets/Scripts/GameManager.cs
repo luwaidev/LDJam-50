@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using TMPro;
 
 public class GameManager : MonoBehaviour
 {
@@ -18,6 +19,11 @@ public class GameManager : MonoBehaviour
     public bool loadingScene;
     public AudioSource menuSound;
     public AudioSource gameSound;
+
+    [Header("Score")]
+    public float maxTime;
+    public float time;
+    public int damageDone;
 
     private void Awake()
     {
@@ -34,11 +40,6 @@ public class GameManager : MonoBehaviour
         StartCoroutine(LoadScene(sceneName));
     }
 
-    public void LoadNext()
-    {
-        string sceneName = (Int32.Parse(SceneManager.GetActiveScene().name) + 1).ToString();
-        StartCoroutine(LoadScene(sceneName));
-    }
 
 
     public void LoadWithDelay(string sceneName, float delayTime)
@@ -54,6 +55,13 @@ public class GameManager : MonoBehaviour
     public IEnumerator LoadScene(string sceneName)
     {
         Debug.Log("Loading Scene");
+
+        if (SceneManager.GetActiveScene().name == "Game" || SceneManager.GetActiveScene().name == "Infinite")
+        {
+            time = BossController.instance.actualTime;
+        }
+        bool inStoryMode = SceneManager.GetActiveScene().name == "Game";
+
         if (loadingScene) yield break;
         loadingScene = true;
 
@@ -75,20 +83,33 @@ public class GameManager : MonoBehaviour
         }
         load.allowSceneActivation = true;
 
+
+
+        transition.SetTrigger("Transition"); // Start transitioning scene back
+
+        yield return new WaitForEndOfFrame();
         if (sceneName == "Menu")
         {
             menuSound.Play();
             gameSound.Stop();
         }
-        else if (sceneName == "Game")
+        else if (sceneName == "Game" || sceneName == "Infinite")
         {
             menuSound.Stop();
             gameSound.Play();
         }
+        else if (sceneName == "End")
+        {
 
-        transition.SetTrigger("Transition"); // Start transitioning scene back
-
-        yield return new WaitForEndOfFrame();
+            menuSound.Play();
+            gameSound.Stop();
+            GameObject.Find("time").GetComponent<TMP_Text>().text = "Time - " + time;
+            GameObject.Find("score").GetComponent<TMP_Text>().text = "Score - " + (time * damageDone / 2);
+            if (inStoryMode)
+            {
+                // GameObject.Find("survived").GetComponent<TMP_Text>().text = "People Escaped - " + (time * damageDone / 2);
+            }
+        }
         yield return new WaitForSeconds(sceneTransitionTime); // Wait for transition
         loadingScene = false;
 

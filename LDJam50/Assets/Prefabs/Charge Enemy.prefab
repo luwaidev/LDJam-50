@@ -94,7 +94,7 @@ MonoBehaviour:
   minionAhead: {fileID: 0}
   hitParticle: {fileID: 206404822641232594, guid: f7fd42c408af5d847a100bf342c9fbda, type: 3}
   hitFeedback: {fileID: 0}
-  chargeSpeed: 8
+  chargeSpeed: 4.5
 --- !u!1 &6653036314829399564
 GameObject:
   m_ObjectHideFlags: 0

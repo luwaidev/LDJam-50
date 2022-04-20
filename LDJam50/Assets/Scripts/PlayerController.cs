@@ -37,6 +37,7 @@ public class PlayerController : MonoBehaviour
     public Vector2 input;
     private Vector2 mouseDirection;
     public float mouseSpeed;
+    public float turnAngle;
 
     [Header("Dash Settings")]
     public float dashSpeed;
@@ -49,17 +50,16 @@ public class PlayerController : MonoBehaviour
     // Combat settings
     public bool firing;
     [SerializeField] float fireSpeed;
-    public int damage;
 
     //////////////// INPUT ///////////////
     public void OnMove(InputValue value)
     {
         input = value.Get<Vector2>(); // Get Vector2 input
 
-        var mouse = Mouse.current; // Get mouse
-        Vector2 mousePositionToPlayer = ((Vector2)Camera.main.ScreenToWorldPoint(mouse.position.ReadValue()) - (Vector2)transform.position); // Get mouse positions
+        // var mouse = Mouse.current; // Get mouse
+        // Vector2 mousePositionToPlayer = ((Vector2)Camera.main.ScreenToWorldPoint(mouse.position.ReadValue()) - (Vector2)transform.position); // Get mouse positions
 
-        mouseDirection = mousePositionToPlayer.normalized;
+        // mouseDirection = mousePositionToPlayer.normalized;
     }
 
     // Called when fire button is pressed
@@ -69,14 +69,14 @@ public class PlayerController : MonoBehaviour
     }
 
 
-    public void OnLook()
-    {
-        var mouse = Mouse.current; // Get mouse
-        Vector2 mousePositionToPlayer = ((Vector2)Camera.main.ScreenToWorldPoint(mouse.position.ReadValue()) - (Vector2)transform.position); // Get mouse positions
+    // public void OnLook()
+    // {
+    //     var mouse = Mouse.current; // Get mouse
+    //     Vector2 mousePositionToPlayer = ((Vector2)Camera.main.ScreenToWorldPoint(mouse.position.ReadValue()) - (Vector2)transform.position); // Get mouse positions
 
-        mouseDirection = mousePositionToPlayer.normalized;
+    //     mouseDirection = mousePositionToPlayer.normalized;
 
-    }
+    // }
 
     public void OnDash()
     {
@@ -102,14 +102,27 @@ public class PlayerController : MonoBehaviour
         if (!movementLocked)
         {
             // Setting movement velocity
-            Vector2 directionBonus = input == Vector2.zero ? Vector2.zero : mouseDirection * mouseSpeed;
-            if (input != Vector2.zero) rb.velocity = input * speed + directionBonus;
+            // Vector2 directionBonus = input == Vector2.zero ? Vector2.zero : mouseDirection * mouseSpeed;
+            if (input != Vector2.zero) rb.velocity = input * speed;
 
-            angle = Mathf.LerpAngle(angle,
-            Mathf.Atan2(mouseDirection.y, mouseDirection.x) * Mathf.Rad2Deg, turnSpeed);
-            transform.eulerAngles = new Vector3(0, 0, angle);
+            // angle = Mathf.LerpAngle(angle,
+            // Mathf.Atan2(mouseDirection.y, mouseDirection.x) * Mathf.Rad2Deg, turnSpeed);
+            // transform.eulerAngles = new Vector3(0, 0, angle);
 
             if (firingInput) StartCoroutine(Shoot());
+        }
+
+        if (!movementLocked && input.x != 0)
+        {
+            transform.eulerAngles = new Vector3(transform.eulerAngles.x,
+                    Mathf.LerpAngle(transform.eulerAngles.y, turnAngle * Mathf.Sign(input.x), 0.05f),
+                    Mathf.Lerp(transform.eulerAngles.z, 90 + turnAngle * -Mathf.Sign(input.x) / 2, 0.05f));
+        }
+        else
+        {
+            transform.eulerAngles = new Vector3(transform.eulerAngles.x,
+                    Mathf.LerpAngle(transform.eulerAngles.y, 0, 0.05f),
+                    Mathf.Lerp(transform.eulerAngles.z, 90, 0.05f));
         }
 
         AfterImage();
@@ -147,14 +160,14 @@ public class PlayerController : MonoBehaviour
         if (health <= 0)
         {
             deadEffect.PlayFeedbacks();
-            GameManager.instance.LoadWithDelay("Main Menu", 1);
+            GameManager.instance.LoadWithDelay("End", 1);
             speed = 0;
         }
     }
 
     public IEnumerator Dash()
     {
-        rb.velocity = mouseDirection * dashSpeed;
+        rb.velocity = input * dashSpeed;
         dashEffect.PlayFeedbacks();
         movementLocked = true;
 
@@ -162,8 +175,8 @@ public class PlayerController : MonoBehaviour
         movementLocked = false;
         // Setting movement velocity
 
-        Vector2 directionBonus = input == Vector2.zero ? Vector2.zero : mouseDirection * mouseSpeed;
-        rb.velocity = input * speed + directionBonus;
+        // Vector2 directionBonus = input == Vector2.zero ? Vector2.zero : mouseDirection * mouseSpeed;
+        rb.velocity = input * speed;
     }
 
     //////////////// Functions ///////////////

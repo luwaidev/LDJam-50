@@ -101,6 +101,7 @@ public class ChargeEnemy : MonoBehaviour
             hitFeedback.PlayFeedbacks();
             Instantiate(hitParticle, other.transform.position, other.transform.rotation);
             Destroy(other.gameObject);
+            GameManager.instance.damageDone++;
             health--;
             if (health <= 0)
             {

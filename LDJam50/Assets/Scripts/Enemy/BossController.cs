@@ -70,6 +70,7 @@ public class BossController : MonoBehaviour
     {
         NextState();
         maxTime = time;
+        GameManager.instance.maxTime = time;
         time = 0;
         StartCoroutine(Timer());
     }
@@ -106,7 +107,7 @@ public class BossController : MonoBehaviour
 
         if (time > maxTime)
         {
-            GameManager.instance.Load("Main Menu");
+            GameManager.instance.Load("End");
         }
 
     }
@@ -115,6 +116,7 @@ public class BossController : MonoBehaviour
     {
         if (other.tag == "Bullet")
         {
+            GameManager.instance.damageDone++;
             damage++;
             hit = true;
             hitFeedback.PlayFeedbacks();
@@ -246,5 +248,26 @@ public class BossController : MonoBehaviour
         damage = 0;
         state = State.Idle;
         NextState();
+    }
+
+    [Header("Spawning Settings")]
+    public int minSpawns;
+    public int maxSpawns;
+    public float spawnTime;
+    IEnumerator SpawnWaves()
+    {
+        yield return null;
+
+        for (int i = 0; i < Random.Range(minSpawns, maxSpawns); i++)
+        {
+            int spawnPoint = Random.Range(1, 2);
+            if (i % 3 == 0)
+            {
+                Instantiate(chargeEnemy, spawnPositions[spawnPoint - 1].position, Quaternion.identity);
+            }
+
+            Instantiate(minion, spawnPositions[spawnPoint - 1].position, Quaternion.identity);
+            yield return new WaitForSeconds(spawnTime);
+        }
     }
 }

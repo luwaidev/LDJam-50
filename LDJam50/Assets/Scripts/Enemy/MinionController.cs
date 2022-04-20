@@ -106,6 +106,7 @@ public class MinionController : MonoBehaviour
             if (hitFeedback == null) hitFeedback = GameObject.Find("Boss Hit").GetComponent<MMFeedbacks>();
             hitFeedback.PlayFeedbacks();
             Instantiate(hitParticle, other.transform.position, other.transform.rotation);
+            GameManager.instance.damageDone++;
             Destroy(other.gameObject);
             Destroy(gameObject);
 
